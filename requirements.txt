@@ -7,3 +7,4 @@ streamlit
 opencv-python
 scikit-learn
 Pillow==8.3.1
+face_recognition
