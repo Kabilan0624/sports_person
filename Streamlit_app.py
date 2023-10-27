@@ -2,7 +2,7 @@ import streamlit as st
 import pickle
 from PIL import Image
 import numpy as np
-import cv2
+import face_recognition
 
 # Load the trained model
 with open("train_data.pkl", "rb") as model_file:
@@ -12,35 +12,26 @@ with open("train_data.pkl", "rb") as model_file:
 with open("dictionary.pkl", "rb") as class_file:
     class_dictionary = pickle.load(class_file)
 
-# Load the Haar Cascade classifiers for face and eye detection
-face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
-
 # Define a function to make predictions
 def predict_person_name(image):
-    # Convert the image to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # Convert the image to a NumPy array
+    img = np.array(image)
 
-    # Detect faces in the image
-    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+    # Detect faces in the image using face_recognition
+    face_locations = face_recognition.face_locations(img)
 
-    for (x, y, w, h) in faces:
-        # Extract the region of interest (ROI)
-        roi_color = image[y:y+h, x:x+w]
+    if len(face_locations) == 0:
+        return "No face detected"
 
-        # Detect eyes in the ROI
-        eyes = eye_cascade.detectMultiScale(roi_color)
+    # Preprocess the image for your model and make predictions
+    # Example: img = preprocess_image(img)
+    # Replace this with your actual prediction code
+    prediction = model.predict(np.array([img]))[0]
 
-        if len(eyes) >= 2:
-            # Preprocess the image (resize, normalize, etc.) to match the input requirements of your model
-            # Make predictions using your model
-            # Replace this with your actual prediction code
-            prediction = model.predict(np.array([image]))[0]
+    # Map the predicted class to the person's name using the class dictionary
+    person_name = class_dictionary.get(prediction, "Unknown")
 
-            # Map the predicted class to the person's name using the class dictionary
-            person_name = class_dictionary.get(prediction, "Unknown")
-
-            return person_name
+    return person_name
 
 # Streamlit UI
 st.title("Sports Person Name Predictor")
@@ -53,13 +44,9 @@ if uploaded_image is not None:
     st.image(image, caption="Uploaded Image", use_column_width=True)
 
     if st.button("Predict"):
-        # Convert the image to a NumPy array
-        img = np.array(image)
-
-        # Make predictions using the loaded model
-        person_name = predict_person_name(img)
-
+        person_name = predict_person_name(image)
         st.write(f"Predicted Person's Name: {person_name}")
+
 
 # To run the app, use the following command in your terminal
 # streamlit run your_streamlit_app.py
